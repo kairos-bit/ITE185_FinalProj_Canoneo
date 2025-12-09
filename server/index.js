@@ -124,8 +124,6 @@ app.post("/api/members", (req, res) => {
     });
   });
 });
-
-// PUT update member by idNumber
 app.put("/api/members/:idNumber", (req, res) => {
   const oldIdNumber = req.params.idNumber;
   const { newIdNumber, name, role, profileImage } = req.body;
@@ -242,7 +240,6 @@ app.put("/api/members/:idNumber", (req, res) => {
     }
   );
 });
-
 
 // DELETE member by idNumber
 app.delete("/api/members/:idNumber", (req, res) => {
