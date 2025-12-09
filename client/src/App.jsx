@@ -353,6 +353,8 @@ function MembersPage({
   membersError,
   tasks = [],
 }) {
+  
+  const [taskStatusFilter, setTaskStatusFilter] = useState("All");
   const [idNumber, setIdNumber] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState(ROLES[0]);
@@ -762,38 +764,61 @@ function MembersPage({
           boxShadow: "0 10px 24px rgba(248, 113, 113, 0.05)",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: 12,
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          <div>
-            <h2 style={{ fontSize: 20, marginBottom: 2 }}>Current Members</h2>
-            <span style={{ fontSize: 13, color: THEME.textMuted }}>
-              Total: {members.length}
-            </span>
-          </div>
+       <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: 12,
+    alignItems: "center",
+    gap: 12,
+  }}
+>
+  <div>
+    <h2 style={{ fontSize: 20, marginBottom: 2 }}>Current Members</h2>
+    <span style={{ fontSize: 13, color: THEME.textMuted }}>
+      Total: {members.length}
+    </span>
+  </div>
 
-          <input
-            type="text"
-            value={memberSearch}
-            onChange={(e) => setMemberSearch(e.target.value)}
-            placeholder="Search by ID, name, or role…"
-            style={{
-              padding: "6px 10px",
-              borderRadius: 999,
-              border: `1px solid ${THEME.cardBorder}`,
-              backgroundColor: "#fff7f7",
-              color: THEME.textMain,
-              fontSize: 12,
-              minWidth: 220,
-            }}
-          />
-        </div>
+  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    {/* Status filter for Current Tasks */}
+    <select
+      value={taskStatusFilter}
+      onChange={(e) => setTaskStatusFilter(e.target.value)}
+      style={{
+        padding: "6px 10px",
+        borderRadius: 999,
+        border: `1px solid ${THEME.cardBorder}`,
+        backgroundColor: "#fff7f7",
+        color: THEME.textMain,
+        fontSize: 12,
+      }}
+    >
+      <option value="All">All tasks</option>
+      <option value="Planned">Planned</option>
+      <option value="In Progress">In Progress</option>
+      <option value="Completed">Completed</option>
+    </select>
+
+    {/* Existing search box */}
+    <input
+      type="text"
+      value={memberSearch}
+      onChange={(e) => setMemberSearch(e.target.value)}
+      placeholder="Search by ID, name, or role…"
+      style={{
+        padding: "6px 10px",
+        borderRadius: 999,
+        border: `1px solid ${THEME.cardBorder}`,
+        backgroundColor: "#fff7f7",
+        color: THEME.textMain,
+        fontSize: 12,
+        minWidth: 220,
+      }}
+    />
+  </div>
+</div>
+
 
         {members.length === 0 ? (
           <p style={{ color: THEME.textMuted, fontSize: 14 }}>
@@ -934,7 +959,6 @@ function MembersPage({
   <span style={{ fontSize: 12, color: THEME.textMuted }}>—</span>
 ) : (
   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-
     {(() => {
       // Group tasks
       const grouped = {
@@ -949,7 +973,7 @@ function MembersPage({
         grouped[status].push(task);
       });
 
-      // Colors for each status
+      // Styles for each status header
       const statusStyles = {
         Planned: {
           bg: "#ffe4e6",
@@ -968,12 +992,24 @@ function MembersPage({
         },
       };
 
-      return Object.entries(grouped).map(
-        ([status, tasksInGroup]) =>
-          tasksInGroup.length > 0 && (
-            <div key={status} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              
-              {/* Status Header */}
+      const statusOrder = ["Planned", "In Progress", "Completed"];
+
+      // build sections based on global filter
+      const sections = statusOrder
+        .filter(
+          (status) =>
+            taskStatusFilter === "All" || taskStatusFilter === status
+        )
+        .map((status) => {
+          const tasksInGroup = grouped[status] || [];
+          if (tasksInGroup.length === 0) return null;
+
+          return (
+            <div
+              key={status}
+              style={{ display: "flex", flexDirection: "column", gap: 4 }}
+            >
+              {/* Status header */}
               <div
                 style={{
                   padding: "4px 10px",
@@ -991,8 +1027,15 @@ function MembersPage({
                 {status}
               </div>
 
-              {/* Tasks under that status */}
-              <div style={{ marginLeft: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+              {/* Tasks under this status */}
+              <div
+                style={{
+                  marginLeft: 8,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                }}
+              >
                 {tasksInGroup.map((task) => {
                   const roleLabel =
                     task.writerId === member.idNumber ? "Writer" : "Media";
@@ -1006,20 +1049,30 @@ function MembersPage({
                       }}
                     >
                       <strong>{task.title}</strong>{" "}
-<span style={{ color: THEME.textMuted }}>
-  ({roleLabel}
-  {task.date ? ` · ${task.date}` : ""})
-</span>
-
+                      <span style={{ color: THEME.textMuted }}>
+                        ({roleLabel}
+                        {task.date ? ` · ${task.date}` : ""})
+                      </span>
                     </div>
                   );
                 })}
               </div>
             </div>
-          )
-      );
-    })()}
+          );
+        })
+        .filter(Boolean);
 
+      // If filter hides everything for this member, show "—"
+      if (sections.length === 0) {
+        return (
+          <span style={{ fontSize: 12, color: THEME.textMuted }}>
+            No tasks for this status.
+          </span>
+        );
+      }
+
+      return sections;
+    })()}
   </div>
 )}
 
