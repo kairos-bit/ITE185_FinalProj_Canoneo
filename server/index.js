@@ -6,9 +6,6 @@ const path = require("path");
 
 const app = express();
 const PORT = 4000;
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
 const bcrypt = require("bcryptjs"); // 👈 add this
 
 
@@ -59,6 +56,20 @@ db.serialize(() => {
   `,
     (err) => {
       if (err) console.error("Error creating tasks table:", err.message);
+    }
+  );
+   db.run(
+    `
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      passwordHash TEXT NOT NULL,
+      createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `,
+    (err) => {
+      if (err) console.error("Error creating users table:", err.message);
     }
   );
 });
