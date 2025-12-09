@@ -11,6 +11,31 @@ import {
 const ROLES = ["Photojournalist", "Videojournalist", "Writer", "Manager"];
 const MEDIA_ROLES = ["Photojournalist", "Videojournalist"];
 
+// Simple theme tokens for the light / minimal look
+const THEME = {
+  appBg: "#fff7f7",
+  sidebarBg: "#fffdfd",
+  headerGradient:
+    "linear-gradient(90deg, #fff7f7 0%, #ffe4e6 40%, #fecaca 100%)",
+  headerBorder: "#f3d4d4",
+  cardBg: "#ffffff",
+  cardBorder: "#f3d4d4",
+  textMain: "#0f172a",
+  textMuted: "#6b7280",
+  textSoft: "#9ca3af",
+  navInactiveBorder: "#f3d4d4",
+  navInactiveText: "#6b7280",
+  navActiveGradient: "linear-gradient(90deg, #fb7185, #f97373, #f97316)",
+  accentGradient: "linear-gradient(90deg, #fb7185, #f97373, #f97316)",
+  softAccentBg: "#fee2e2",
+  softAccentBorder: "#fecaca",
+  tableHeaderBg: "#fee2e2",
+  tableRowBorder: "#fde2e2",
+  deleteBorder: "#fecaca",
+  deleteBg: "#fee2e2",
+  deleteText: "#b91c1c",
+};
+
 function getInitials(name) {
   if (!name) return "S";
   const parts = name.trim().split(/\s+/);
@@ -37,17 +62,22 @@ function NavItem({ to, label }) {
     >
       <div
         style={{
-          padding: "8px 10px",
+          padding: "8px 12px",
           borderRadius: 999,
-          border: isActive ? "none" : "1px solid #374151",
-          background: isActive
-            ? "linear-gradient(90deg, #F97316, #EC4899, #6366F1)"
-            : "transparent",
-          color: isActive ? "white" : "#9CA3AF",
+          border: isActive
+            ? "1px solid transparent"
+            : `1px solid ${THEME.navInactiveBorder}`,
+          background: isActive ? THEME.navActiveGradient : "#ffffff",
+          color: isActive ? "#ffffff" : THEME.navInactiveText,
           fontSize: 13,
           fontWeight: isActive ? 600 : 500,
           cursor: "pointer",
           textAlign: "left",
+          boxShadow: isActive
+            ? "0 8px 18px rgba(248, 113, 113, 0.35)"
+            : "0 0 0 rgba(0,0,0,0)",
+          transition:
+            "background 0.15s ease, box-shadow 0.15s ease, transform 0.05s",
         }}
       >
         {label}
@@ -63,38 +93,36 @@ function App() {
   const [membersError, setMembersError] = useState("");
 
   useEffect(() => {
-  async function loadMembers() {
-    try {
-      setLoadingMembers(true);
-      setMembersError("");
+    async function loadMembers() {
+      try {
+        setLoadingMembers(true);
+        setMembersError("");
 
-      // artificial delay so we can SEE the loading text
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+        // artificial delay so we can SEE the loading text
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const res = await fetch("http://localhost:4000/api/members");
-      if (!res.ok) {
-        throw new Error("Failed to fetch members");
+        const res = await fetch("http://localhost:4000/api/members");
+        if (!res.ok) {
+          throw new Error("Failed to fetch members");
+        }
+        const data = await res.json();
+        setMembers(data);
+      } catch (err) {
+        console.error(err);
+        setMembersError("Could not load members from the server.");
+      } finally {
+        setLoadingMembers(false);
       }
-      const data = await res.json();
-      setMembers(data);
-    } catch (err) {
-      console.error(err);
-      setMembersError("Could not load members from the server.");
-    } finally {
-      setLoadingMembers(false);
     }
-  }
 
-  loadMembers();
-}, []);
+    loadMembers();
+  }, []);
 
-
-  // Shared tasks list
-   // Shared tasks list (from DB)
+  // Shared tasks list (from DB)
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [tasksError, setTasksError] = useState("");
-    useEffect(() => {
+  useEffect(() => {
     async function loadTasks() {
       try {
         setLoadingTasks(true);
@@ -118,13 +146,12 @@ function App() {
     loadTasks();
   }, []);
 
-
   return (
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#020617",
-        color: "#E5E7EB",
+        backgroundColor: THEME.appBg,
+        color: THEME.textMain,
         fontFamily:
           "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         display: "flex",
@@ -136,12 +163,14 @@ function App() {
         style={{
           height: 64,
           padding: "0 24px",
-          borderBottom: "1px solid #1F2933",
+          borderBottom: `1px solid ${THEME.headerBorder}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          background:
-            "linear-gradient(90deg, #0F172A 0%, #111827 40%, #1E293B 100%)",
+          background: THEME.headerGradient,
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -150,23 +179,30 @@ function App() {
               width: 32,
               height: 32,
               borderRadius: 999,
-              background:
-                "linear-gradient(135deg, #F97316, #EC4899, #6366F1)",
+              background: THEME.accentGradient,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontWeight: 700,
               fontSize: 16,
+              color: "#ffffff",
+              boxShadow: "0 8px 16px rgba(248, 113, 113, 0.4)",
             }}
           >
             S
           </div>
         </div>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 18 }}>
+          <div style={{ fontWeight: 700, fontSize: 18, textAlign: "right" }}>
             Silahis Publication
           </div>
-          <div style={{ fontSize: 12, color: "#9CA3AF", textAlign: "right" }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: THEME.textMuted,
+              textAlign: "right",
+            }}
+          >
             Student Journalist Organization · Member & Task Manager
           </div>
         </div>
@@ -177,17 +213,17 @@ function App() {
         <aside
           style={{
             width: 220,
-            borderRight: "1px solid #1F2933",
+            borderRight: `1px solid ${THEME.cardBorder}`,
             padding: "20px 16px",
-            backgroundColor: "#020617",
+            backgroundColor: THEME.sidebarBg,
           }}
         >
           <span
             style={{
-              fontSize: 12,
+              fontSize: 11,
               textTransform: "uppercase",
               letterSpacing: 1,
-              color: "#6B7280",
+              color: THEME.textMuted,
               marginBottom: 8,
               display: "block",
             }}
@@ -205,9 +241,10 @@ function App() {
               marginTop: 24,
               padding: 12,
               borderRadius: 12,
-              border: "1px dashed #4B5563",
+              border: `1px dashed ${THEME.softAccentBorder}`,
               fontSize: 12,
-              color: "#9CA3AF",
+              color: THEME.textMuted,
+              backgroundColor: "#fffafa",
             }}
           >
             Tasks page assigns writers and photo/video journalists to coverage
@@ -223,87 +260,83 @@ function App() {
           }}
         >
           <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <Routes>
-  {/* Home defaults to Members */}
-  <Route
-  path="/"
-  element={
-    <MembersPage
-      members={members}
-      setMembers={setMembers}
-      loadingMembers={loadingMembers}
-      membersError={membersError}
-      tasks={tasks}
-    />
-  }
-/>
+            <Routes>
+              {/* Home defaults to Members */}
+              <Route
+                path="/"
+                element={
+                  <MembersPage
+                    members={members}
+                    setMembers={setMembers}
+                    loadingMembers={loadingMembers}
+                    membersError={membersError}
+                    tasks={tasks}
+                  />
+                }
+              />
 
-<Route
-  path="/members"
-  element={
-    <MembersPage
-      members={members}
-      setMembers={setMembers}
-      loadingMembers={loadingMembers}
-      membersError={membersError}
-      tasks={tasks}
-    />
-  }
-/>
-  {/* Tasks dashboard */}
-   <Route
-    path="/tasks"
-    element={
-      <TaskDashboardPage
-        members={members}
-        tasks={tasks}
-        setTasks={setTasks}
-        loadingTasks={loadingTasks}
-        tasksError={tasksError}
-      />
-    }
-  />
+              <Route
+                path="/members"
+                element={
+                  <MembersPage
+                    members={members}
+                    setMembers={setMembers}
+                    loadingMembers={loadingMembers}
+                    membersError={membersError}
+                    tasks={tasks}
+                  />
+                }
+              />
+              {/* Tasks dashboard */}
+              <Route
+                path="/tasks"
+                element={
+                  <TaskDashboardPage
+                    members={members}
+                    tasks={tasks}
+                    setTasks={setTasks}
+                    loadingTasks={loadingTasks}
+                    tasksError={tasksError}
+                  />
+                }
+              />
 
-  {/* Role statistics */}
-  <Route
-    path="/dashboard"
-    element={<DashboardPage members={members} />}
-  />
+              {/* Role statistics */}
+              <Route
+                path="/dashboard"
+                element={<DashboardPage members={members} />}
+              />
 
-  {/* Member profile */}
-  <Route
-  path="/profile/:idNumber"
-  element={
-    <ProfilePage
-      members={members}
-      loadingMembers={loadingMembers}
-      membersError={membersError}
-      tasks={tasks}
-    />
-  }
-/>
+              {/* Member profile */}
+              <Route
+                path="/profile/:idNumber"
+                element={
+                  <ProfilePage
+                    members={members}
+                    loadingMembers={loadingMembers}
+                    membersError={membersError}
+                    tasks={tasks}
+                  />
+                }
+              />
 
+              {/* About Silahis */}
+              <Route path="/about" element={<AboutPage />} />
 
-  {/* About Silahis */}
-  <Route path="/about" element={<AboutPage />} />
-
-  {/* Fallback: send unknown paths back to Members */}
-  
-<Route
-  path="*"
-  element={
-    <MembersPage
-      members={members}
-      setMembers={setMembers}
-      loadingMembers={loadingMembers}
-      membersError={membersError}
-      tasks={tasks}
-    />
-  }
-/>
-</Routes>
-
-
+              {/* Fallback: send unknown paths back to Members */}
+              <Route
+                path="*"
+                element={
+                  <MembersPage
+                    members={members}
+                    setMembers={setMembers}
+                    loadingMembers={loadingMembers}
+                    membersError={membersError}
+                    tasks={tasks}
+                  />
+                }
+              />
+            </Routes>
           </div>
         </main>
       </div>
@@ -320,7 +353,6 @@ function MembersPage({
   membersError,
   tasks = [],
 }) {
-
   const [idNumber, setIdNumber] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState(ROLES[0]);
@@ -342,80 +374,78 @@ function MembersPage({
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
+    e.preventDefault();
+    setError("");
 
-  if (!idNumber.trim() || !name.trim()) {
-    setError("ID number and name are required.");
-    return;
-  }
+    if (!idNumber.trim() || !name.trim()) {
+      setError("ID number and name are required.");
+      return;
+    }
 
-  try {
-    if (!isEditing) {
-      // CREATE (POST /api/members)
-      const res = await fetch("http://localhost:4000/api/members", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idNumber,
-          name,
-          role,
-          profileImage,
-        }),
-      });
-
-      if (res.status === 409) {
-        const body = await res.json();
-        setError(body.error || "ID number already exists.");
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error("Failed to add member");
-      }
-
-      const created = await res.json();
-      setMembers((prev) => [...prev, created]);
-      resetForm();
-    } else {
-      // UPDATE (PUT /api/members/:idNumber)
-      const res = await fetch(
-        `http://localhost:4000/api/members/${editingId}`,
-        {
-          method: "PUT",
+    try {
+      if (!isEditing) {
+        // CREATE (POST /api/members)
+        const res = await fetch("http://localhost:4000/api/members", {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            newIdNumber: idNumber,
+            idNumber,
             name,
             role,
             profileImage,
           }),
+        });
+
+        if (res.status === 409) {
+          const body = await res.json();
+          setError(body.error || "ID number already exists.");
+          return;
         }
-      );
 
-      if (res.status === 409) {
-        const body = await res.json();
-        setError(body.error || "Another member uses that ID.");
-        return;
+        if (!res.ok) {
+          throw new Error("Failed to add member");
+        }
+
+        const created = await res.json();
+        setMembers((prev) => [...prev, created]);
+        resetForm();
+      } else {
+        // UPDATE (PUT /api/members/:idNumber)
+        const res = await fetch(
+          `http://localhost:4000/api/members/${editingId}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              newIdNumber: idNumber,
+              name,
+              role,
+              profileImage,
+            }),
+          }
+        );
+
+        if (res.status === 409) {
+          const body = await res.json();
+          setError(body.error || "Another member uses that ID.");
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("Failed to update member");
+        }
+
+        const updated = await res.json();
+        setMembers((prev) =>
+          prev.map((m) => (m.idNumber === editingId ? updated : m))
+        );
+        resetForm();
       }
-
-      if (!res.ok) {
-        throw new Error("Failed to update member");
-      }
-
-      const updated = await res.json();
-      setMembers((prev) =>
-        prev.map((m) =>
-          m.idNumber === editingId ? updated : m
-        )
-      );
-      resetForm();
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
     }
-  } catch (err) {
-    console.error(err);
-    setError("Something went wrong. Please try again.");
-  }
-};
+  };
 
   const handleEdit = (member) => {
     setIsEditing(true);
@@ -428,27 +458,27 @@ function MembersPage({
   };
 
   const handleDelete = async (idToDelete) => {
-  if (!window.confirm("Delete this member?")) return;
+    if (!window.confirm("Delete this member?")) return;
 
-  try {
-    const res = await fetch(
-      `http://localhost:4000/api/members/${idToDelete}`,
-      { method: "DELETE" }
-    );
+    try {
+      const res = await fetch(
+        `http://localhost:4000/api/members/${idToDelete}`,
+        { method: "DELETE" }
+      );
 
-    if (!res.ok) {
-      throw new Error("Failed to delete member");
+      if (!res.ok) {
+        throw new Error("Failed to delete member");
+      }
+
+      setMembers((prev) => prev.filter((m) => m.idNumber !== idToDelete));
+      if (isEditing && editingId === idToDelete) {
+        resetForm();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Could not delete member. Please try again.");
     }
-
-    setMembers((prev) => prev.filter((m) => m.idNumber !== idToDelete));
-    if (isEditing && editingId === idToDelete) {
-      resetForm();
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Could not delete member. Please try again.");
-  }
-};
+  };
 
   const handleProfileImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -464,52 +494,52 @@ function MembersPage({
 
   const normalizedSearch = memberSearch.trim().toLowerCase();
 
-const filteredMembers = normalizedSearch
-  ? members.filter((m) => {
-      const id = m.idNumber?.toLowerCase() || "";
-      const name = m.name?.toLowerCase() || "";
-      const roleValue = m.role?.toLowerCase() || "";
-      return (
-        id.includes(normalizedSearch) ||
-        name.includes(normalizedSearch) ||
-        roleValue.includes(normalizedSearch)
-      );
-    })
-  : members;
-
+  const filteredMembers = normalizedSearch
+    ? members.filter((m) => {
+        const id = m.idNumber?.toLowerCase() || "";
+        const name = m.name?.toLowerCase() || "";
+        const roleValue = m.role?.toLowerCase() || "";
+        return (
+          id.includes(normalizedSearch) ||
+          name.includes(normalizedSearch) ||
+          roleValue.includes(normalizedSearch)
+        );
+      })
+    : members;
 
   return (
-  <>
-    <div style={{ marginBottom: 24 }}>
-      <h1 style={{ fontSize: 32, marginBottom: 6 }}>Silahis Members</h1>
-      <p style={{ color: "#9CA3AF", maxWidth: 620, fontSize: 14 }}>
-        Manage accounts for Silahis student journalists. Add, view, update,
-        and delete members with roles, ID numbers, and profile photos.
-      </p>
-    </div>
+    <>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 32, marginBottom: 6 }}>Silahis Members</h1>
+        <p style={{ color: THEME.textMuted, maxWidth: 620, fontSize: 14 }}>
+          Manage accounts for Silahis student journalists. Add, view, update,
+          and delete members with roles, ID numbers, and profile photos.
+        </p>
+      </div>
 
-    {loadingMembers && (
-      <p style={{ color: "#9CA3AF", marginBottom: 8, fontSize: 14 }}>
-        Loading members from the server…
-      </p>
-    )}
+      {loadingMembers && (
+        <p style={{ color: THEME.textMuted, marginBottom: 8, fontSize: 14 }}>
+          Loading members from the server…
+        </p>
+      )}
 
-    {membersError && (
-      <p style={{ color: "#F97316", marginBottom: 8, fontSize: 14 }}>
-        {membersError}
-      </p>
-    )}
+      {membersError && (
+        <p style={{ color: "#e11d48", marginBottom: 8, fontSize: 14 }}>
+          {membersError}
+        </p>
+      )}
 
-    {/* Form */}
-    <section
-      style={{
-        backgroundColor: "#020617",
-        borderRadius: 12,
-        padding: 20,
-        border: "1px solid #374151",
-      }}
-    >
-
+      {/* Form */}
+      <section
+        style={{
+          backgroundColor: THEME.cardBg,
+          borderRadius: 16,
+          padding: 20,
+          border: `1px solid ${THEME.cardBorder}`,
+          boxShadow: "0 12px 30px rgba(248, 113, 113, 0.05)",
+          marginBottom: 20,
+        }}
+      >
         <h2 style={{ fontSize: 20, marginBottom: 12 }}>
           {isEditing ? "Edit Member" : "Add New Member"}
         </h2>
@@ -534,7 +564,7 @@ const filteredMembers = normalizedSearch
           >
             <div style={{ display: "flex", flexDirection: "column" }}>
               <label style={{ marginBottom: 4, fontSize: 14 }}>
-                ID Number <span style={{ color: "#F97316" }}>*</span>
+                ID Number <span style={{ color: "#f97373" }}>*</span>
               </label>
               <input
                 type="text"
@@ -543,17 +573,18 @@ const filteredMembers = normalizedSearch
                 placeholder="e.g. 2023-001"
                 style={{
                   padding: "8px 10px",
-                  borderRadius: 8,
-                  border: "1px solid #4B5563",
-                  backgroundColor: "#020617",
-                  color: "white",
+                  borderRadius: 10,
+                  border: `1px solid ${THEME.cardBorder}`,
+                  backgroundColor: "#fff7f7",
+                  color: THEME.textMain,
+                  fontSize: 14,
                 }}
               />
             </div>
 
             <div style={{ display: "flex", flexDirection: "column" }}>
               <label style={{ marginBottom: 4, fontSize: 14 }}>
-                Full Name <span style={{ color: "#F97316" }}>*</span>
+                Full Name <span style={{ color: "#f97373" }}>*</span>
               </label>
               <input
                 type="text"
@@ -562,10 +593,11 @@ const filteredMembers = normalizedSearch
                 placeholder="Member name"
                 style={{
                   padding: "8px 10px",
-                  borderRadius: 8,
-                  border: "1px solid #4B5563",
-                  backgroundColor: "#020617",
-                  color: "white",
+                  borderRadius: 10,
+                  border: `1px solid ${THEME.cardBorder}`,
+                  backgroundColor: "#fff7f7",
+                  color: THEME.textMain,
+                  fontSize: 14,
                 }}
               />
             </div>
@@ -577,10 +609,11 @@ const filteredMembers = normalizedSearch
                 onChange={(e) => setRole(e.target.value)}
                 style={{
                   padding: "8px 10px",
-                  borderRadius: 8,
-                  border: "1px solid #4B5563",
-                  backgroundColor: "#020617",
-                  color: "white",
+                  borderRadius: 10,
+                  border: `1px solid ${THEME.cardBorder}`,
+                  backgroundColor: "#fff7f7",
+                  color: THEME.textMain,
+                  fontSize: 14,
                 }}
               >
                 {ROLES.map((r) => (
@@ -606,11 +639,11 @@ const filteredMembers = normalizedSearch
                   padding: "10px 18px",
                   borderRadius: 999,
                   border: "none",
-                  background:
-                    "linear-gradient(90deg, #F97316, #EC4899, #6366F1)",
-                  color: "white",
+                  background: THEME.accentGradient,
+                  color: "#ffffff",
                   fontWeight: 600,
                   cursor: "pointer",
+                  fontSize: 14,
                 }}
               >
                 {isEditing ? "Save Changes" : "Add Member"}
@@ -623,9 +656,9 @@ const filteredMembers = normalizedSearch
                   style={{
                     padding: "10px 16px",
                     borderRadius: 999,
-                    border: "1px solid #4B5563",
-                    backgroundColor: "transparent",
-                    color: "#E5E7EB",
+                    border: `1px solid ${THEME.cardBorder}`,
+                    backgroundColor: "#ffffff",
+                    color: THEME.textMain,
                     cursor: "pointer",
                     fontSize: 13,
                   }}
@@ -648,14 +681,14 @@ const filteredMembers = normalizedSearch
                   height: 72,
                   borderRadius: "50%",
                   overflow: "hidden",
-                  border: "2px solid #4B5563",
-                  backgroundColor: "#020617",
+                  border: `2px solid ${THEME.cardBorder}`,
+                  backgroundColor: "#fff7f7",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 24,
                   fontWeight: 600,
-                  color: "#9CA3AF",
+                  color: THEME.textSoft,
                 }}
               >
                 {profileImage ? (
@@ -687,9 +720,9 @@ const filteredMembers = normalizedSearch
                     style={{
                       padding: "4px 8px",
                       borderRadius: 999,
-                      border: "1px solid #4B5563",
-                      backgroundColor: "transparent",
-                      color: "#E5E7EB",
+                      border: `1px solid ${THEME.cardBorder}`,
+                      backgroundColor: "#ffffff",
+                      color: THEME.textMain,
                       fontSize: 11,
                       cursor: "pointer",
                       width: "fit-content",
@@ -701,7 +734,7 @@ const filteredMembers = normalizedSearch
                 <span
                   style={{
                     fontSize: 11,
-                    color: "#6B7280",
+                    color: THEME.textMuted,
                     marginTop: 2,
                   }}
                 >
@@ -713,7 +746,7 @@ const filteredMembers = normalizedSearch
         </form>
 
         {error && (
-          <p style={{ color: "#F97316", marginTop: 8, fontSize: 14 }}>
+          <p style={{ color: "#e11d48", marginTop: 8, fontSize: 14 }}>
             {error}
           </p>
         )}
@@ -722,48 +755,48 @@ const filteredMembers = normalizedSearch
       {/* Table */}
       <section
         style={{
-          backgroundColor: "#020617",
-          borderRadius: 12,
+          backgroundColor: THEME.cardBg,
+          borderRadius: 16,
           padding: 20,
-          border: "1px solid #374151",
+          border: `1px solid ${THEME.cardBorder}`,
+          boxShadow: "0 10px 24px rgba(248, 113, 113, 0.05)",
         }}
       >
-       <div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: 12,
-    alignItems: "center",
-    gap: 12,
-  }}
->
-  <div>
-    <h2 style={{ fontSize: 20, marginBottom: 2 }}>Current Members</h2>
-    <span style={{ fontSize: 13, color: "#9CA3AF" }}>
-      Total: {members.length}
-    </span>
-  </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 12,
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <div>
+            <h2 style={{ fontSize: 20, marginBottom: 2 }}>Current Members</h2>
+            <span style={{ fontSize: 13, color: THEME.textMuted }}>
+              Total: {members.length}
+            </span>
+          </div>
 
-  <input
-    type="text"
-    value={memberSearch}
-    onChange={(e) => setMemberSearch(e.target.value)}
-    placeholder="Search by ID, name, or role…"
-    style={{
-      padding: "6px 10px",
-      borderRadius: 999,
-      border: "1px solid #4B5563",
-      backgroundColor: "#020617",
-      color: "#E5E7EB",
-      fontSize: 12,
-      minWidth: 220,
-    }}
-  />
-</div>
-
+          <input
+            type="text"
+            value={memberSearch}
+            onChange={(e) => setMemberSearch(e.target.value)}
+            placeholder="Search by ID, name, or role…"
+            style={{
+              padding: "6px 10px",
+              borderRadius: 999,
+              border: `1px solid ${THEME.cardBorder}`,
+              backgroundColor: "#fff7f7",
+              color: THEME.textMain,
+              fontSize: 12,
+              minWidth: 220,
+            }}
+          />
+        </div>
 
         {members.length === 0 ? (
-          <p style={{ color: "#9CA3AF", fontSize: 14 }}>
+          <p style={{ color: THEME.textMuted, fontSize: 14 }}>
             No members yet. Use the form above to add the first Silahis member.
           </p>
         ) : (
@@ -775,244 +808,226 @@ const filteredMembers = normalizedSearch
                 fontSize: 14,
               }}
             >
-             <thead>
-  <tr style={{ backgroundColor: "#030712" }}>
-    <th
-      style={{
-        textAlign: "left",
-        padding: "8px",
-        borderBottom: "1px solid #374151",
-      }}
-    >
-      ID Number
-    </th>
-    <th
-      style={{
-        textAlign: "left",
-        padding: "8px",
-        borderBottom: "1px solid #374151",
-      }}
-    >
-      Name
-    </th>
-    <th
-      style={{
-        textAlign: "left",
-        padding: "8px",
-        borderBottom: "1px solid #374151",
-      }}
-    >
-      Role
-    </th>
-    <th
-      style={{
-        textAlign: "left",
-        padding: "8px",
-        borderBottom: "1px solid #374151",
-      }}
-    >
-      Current Tasks
-    </th>
-    <th
-      style={{
-        textAlign: "right",
-        padding: "8px",
-        borderBottom: "1px solid #374151",
-      }}
-    >
-      Actions
-    </th>
-  </tr>
-</thead>
-<tbody>
-  {filteredMembers.length === 0 ? (
-    <tr>
-      <td
-        colSpan={5}
-        style={{
-          padding: "10px",
-          textAlign: "center",
-          fontSize: 13,
-          color: "#9CA3AF",
-          borderBottom: "1px solid #111827",
-        }}
-      >
-        No members match your search.
-      </td>
-    </tr>
-  ) : (
-    filteredMembers.map((member) => {
-      // Find tasks where this member is involved (as writer or media)
-      const memberTasks = tasks.filter(
-        (t) =>
-          t.writerId === member.idNumber || t.mediaId === member.idNumber
-      );
-
-      return (
-        <tr key={member.idNumber}>
-          {/* ID Number */}
-          <td
-            style={{
-              padding: "8px",
-              borderBottom: "1px solid #111827",
-            }}
-          >
-            {member.idNumber}
-          </td>
-
-          {/* Name + avatar */}
-          <td
-            style={{
-              padding: "8px",
-              borderBottom: "1px solid #111827",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  border: "1px solid #4B5563",
-                  backgroundColor: "#020617",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "#9CA3AF",
-                }}
-              >
-                {member.profileImage ? (
-                  <img
-                    src={member.profileImage}
-                    alt={member.name}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
+              <thead>
+                <tr style={{ backgroundColor: THEME.tableHeaderBg }}>
+                  {["ID Number", "Name", "Role", "Current Tasks", "Actions"].map(
+                    (h, i) => (
+                      <th
+                        key={h}
+                        style={{
+                          textAlign: i === 4 ? "right" : "left",
+                          padding: "8px",
+                          borderBottom: `1px solid ${THEME.cardBorder}`,
+                          fontWeight: 600,
+                          color: THEME.textMuted,
+                        }}
+                      >
+                        {h}
+                      </th>
+                    )
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMembers.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      style={{
+                        padding: "10px",
+                        textAlign: "center",
+                        fontSize: 13,
+                        color: THEME.textMuted,
+                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
+                      }}
+                    >
+                      No members match your search.
+                    </td>
+                  </tr>
                 ) : (
-                  <span>{getInitials(member.name)}</span>
+                  filteredMembers.map((member) => {
+                    // Find tasks where this member is involved (as writer or media)
+                    const memberTasks = tasks.filter(
+                      (t) =>
+                        t.writerId === member.idNumber ||
+                        t.mediaId === member.idNumber
+                    );
+
+                    return (
+                      <tr key={member.idNumber}>
+                        {/* ID Number */}
+                        <td
+                          style={{
+                            padding: "8px",
+                            borderBottom: `1px solid ${THEME.tableRowBorder}`,
+                          }}
+                        >
+                          {member.idNumber}
+                        </td>
+
+                        {/* Name + avatar */}
+                        <td
+                          style={{
+                            padding: "8px",
+                            borderBottom: `1px solid ${THEME.tableRowBorder}`,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: "50%",
+                                overflow: "hidden",
+                                border: `1px solid ${THEME.cardBorder}`,
+                                backgroundColor: "#fff7f7",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 12,
+                                fontWeight: 600,
+                                color: THEME.textSoft,
+                              }}
+                            >
+                              {member.profileImage ? (
+                                <img
+                                  src={member.profileImage}
+                                  alt={member.name}
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                  }}
+                                />
+                              ) : (
+                                <span>{getInitials(member.name)}</span>
+                              )}
+                            </div>
+                            <span>{member.name}</span>
+                          </div>
+                        </td>
+
+                        {/* Role */}
+                        <td
+                          style={{
+                            padding: "8px",
+                            borderBottom: `1px solid ${THEME.tableRowBorder}`,
+                          }}
+                        >
+                          {member.role}
+                        </td>
+
+                        {/* Current Tasks */}
+                        <td
+                          style={{
+                            padding: "8px",
+                            borderBottom: `1px solid ${THEME.tableRowBorder}`,
+                          }}
+                        >
+                          {memberTasks.length === 0 ? (
+                            <span
+                              style={{ fontSize: 12, color: THEME.textMuted }}
+                            >
+                              —
+                            </span>
+                          ) : (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 2,
+                                fontSize: 12,
+                                color: THEME.textMuted,
+                              }}
+                            >
+                              {memberTasks.map((task) => {
+                                const roleLabel =
+                                  task.writerId === member.idNumber
+                                    ? "Writer"
+                                    : "Media";
+                                return (
+                                  <span key={task.id}>
+                                    <strong>{task.title}</strong>{" "}
+                                    <span
+                                      style={{
+                                        color: THEME.textMuted,
+                                      }}
+                                    >
+                                      ({roleLabel} · {task.status})
+                                    </span>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Actions */}
+                        <td
+                          style={{
+                            padding: "8px",
+                            borderBottom: `1px solid ${THEME.tableRowBorder}`,
+                            textAlign: "right",
+                          }}
+                        >
+                          <button
+                            onClick={() =>
+                              navigate(`/profile/${member.idNumber}`)
+                            }
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: 999,
+                              border: `1px solid ${THEME.cardBorder}`,
+                              backgroundColor: "#ffffff",
+                              color: THEME.textMain,
+                              fontSize: 12,
+                              cursor: "pointer",
+                              marginRight: 6,
+                            }}
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleEdit(member)}
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: 999,
+                              border: `1px solid ${THEME.cardBorder}`,
+                              backgroundColor: "#ffffff",
+                              color: THEME.textMain,
+                              fontSize: 12,
+                              cursor: "pointer",
+                              marginRight: 6,
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(member.idNumber)}
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: 999,
+                              border: `1px solid ${THEME.deleteBorder}`,
+                              backgroundColor: THEME.deleteBg,
+                              color: THEME.deleteText,
+                              fontSize: 12,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
-              </div>
-              <span>{member.name}</span>
-            </div>
-          </td>
-
-          {/* Role */}
-          <td
-            style={{
-              padding: "8px",
-              borderBottom: "1px solid #111827",
-            }}
-          >
-            {member.role}
-          </td>
-
-          {/* Current Tasks */}
-          <td
-            style={{
-              padding: "8px",
-              borderBottom: "1px solid #111827",
-            }}
-          >
-            {memberTasks.length === 0 ? (
-              <span style={{ fontSize: 12, color: "#9CA3AF" }}>—</span>
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  fontSize: 12,
-                  color: "#9CA3AF",
-                }}
-              >
-                {memberTasks.map((task) => {
-                  const roleLabel =
-                    task.writerId === member.idNumber ? "Writer" : "Media";
-                  return (
-                    <span key={task.id}>
-                      <strong>{task.title}</strong>{" "}
-                      <span style={{ color: "#6B7280" }}>
-                        ({roleLabel} · {task.status})
-                      </span>
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-          </td>
-
-          {/* Actions */}
-          <td
-            style={{
-              padding: "8px",
-              borderBottom: "1px solid #111827",
-              textAlign: "right",
-            }}
-          >
-            <button
-              onClick={() => navigate(`/profile/${member.idNumber}`)}
-              style={{
-                padding: "6px 10px",
-                borderRadius: 999,
-                border: "1px solid #4B5563",
-                backgroundColor: "transparent",
-                color: "#E5E7EB",
-                fontSize: 12,
-                cursor: "pointer",
-                marginRight: 6,
-              }}
-            >
-              View
-            </button>
-            <button
-              onClick={() => handleEdit(member)}
-              style={{
-                padding: "6px 10px",
-                borderRadius: 999,
-                border: "1px solid #4B5563",
-                backgroundColor: "transparent",
-                color: "#E5E7EB",
-                fontSize: 12,
-                cursor: "pointer",
-                marginRight: 6,
-              }}
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => handleDelete(member.idNumber)}
-              style={{
-                padding: "6px 10px",
-                borderRadius: 999,
-                border: "1px solid #DC2626",
-                backgroundColor: "#7F1D1D",
-                color: "white",
-                fontSize: 12,
-                cursor: "pointer",
-              }}
-            >
-              Delete
-            </button>
-          </td>
-        </tr>
-      );
-    })
-  )}
-</tbody>
-
-
+              </tbody>
             </table>
           </div>
         )}
@@ -1030,7 +1045,6 @@ function TaskDashboardPage({
   loadingTasks,
   tasksError,
 }) {
-
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [writerId, setWriterId] = useState("");
@@ -1040,20 +1054,19 @@ function TaskDashboardPage({
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
-
   const [isEditing, setIsEditing] = useState(false);
-const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
-const resetForm = () => {
-  setTitle("");
-  setDescription("");
-  setWriterId("");
-  setMediaId("");
-  setStatus("Planned");
-  setIsEditing(false);
-  setEditingId(null);
-  setError("");
-};
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setWriterId("");
+    setMediaId("");
+    setStatus("Planned");
+    setIsEditing(false);
+    setEditingId(null);
+    setError("");
+  };
   const handleEdit = (task) => {
     setIsEditing(true);
     setEditingId(task.id);
@@ -1064,17 +1077,13 @@ const resetForm = () => {
     setStatus(task.status || "Planned");
     setError("");
 
-    // optional: scroll up so the form is visible
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-
   const writerOptions = members.filter((m) => m.role === "Writer");
-  const mediaOptions = members.filter((m) =>
-    MEDIA_ROLES.includes(m.role)
-  );
+  const mediaOptions = members.filter((m) => MEDIA_ROLES.includes(m.role));
 
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -1142,8 +1151,7 @@ const resetForm = () => {
     }
   };
 
-
-    const handleDelete = async (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm("Delete this task?")) return;
 
     try {
@@ -1165,7 +1173,6 @@ const resetForm = () => {
     }
   };
 
-
   const getMemberName = (id) =>
     members.find((m) => m.idNumber === id)?.name || "Unknown / removed";
 
@@ -1173,7 +1180,6 @@ const resetForm = () => {
     members.find((m) => m.idNumber === id)?.role || "—";
 
   const filteredTasks = tasks.filter((task) => {
-    // Status filter
     if (statusFilter !== "All" && task.status !== statusFilter) return false;
 
     const q = searchQuery.trim().toLowerCase();
@@ -1196,43 +1202,39 @@ const resetForm = () => {
     <>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 32, marginBottom: 6 }}>Task Dashboard</h1>
-        <p style={{ color: "#9CA3AF", maxWidth: 620, fontSize: 14 }}>
+        <p style={{ color: THEME.textMuted, maxWidth: 620, fontSize: 14 }}>
           Create coverage tasks and assign a writer plus a photo/video
           journalist from the existing Silahis members.
         </p>
-         {/* Insert loading + error here */}
-    {loadingTasks && (
-  <p style={{ color: "#9CA3AF", marginBottom: 8, fontSize: 14 }}>
-    Loading tasks from the server…
-  </p>
-)}
+        {loadingTasks && (
+          <p style={{ color: THEME.textMuted, marginBottom: 8, fontSize: 14 }}>
+            Loading tasks from the server…
+          </p>
+        )}
 
-{tasksError && (
-  <p style={{ color: "#F97316", marginBottom: 8, fontSize: 14 }}>
-    {tasksError}
-  </p>
-)}
-
-
-    {/* The rest of the form and table goes here… */} 
+        {tasksError && (
+          <p style={{ color: "#e11d48", marginBottom: 8, fontSize: 14 }}>
+            {tasksError}
+          </p>
+        )}
       </div>
 
       <section
         style={{
-          backgroundColor: "#020617",
-          borderRadius: 12,
+          backgroundColor: THEME.cardBg,
+          borderRadius: 16,
           padding: 20,
-          border: "1px solid #374151",
+          border: `1px solid ${THEME.cardBorder}`,
           marginBottom: 24,
+          boxShadow: "0 12px 30px rgba(248, 113, 113, 0.05)",
         }}
       >
         <h2 style={{ fontSize: 20, marginBottom: 12 }}>Add New Task</h2>
 
         {writerOptions.length === 0 || mediaOptions.length === 0 ? (
-          <p style={{ color: "#F97316", fontSize: 14 }}>
-            You need at least one member with role{" "}
-            <strong>Writer</strong> and one with role{" "}
-            <strong>Photojournalist</strong> or{" "}
+          <p style={{ color: "#e11d48", fontSize: 14 }}>
+            You need at least one member with role <strong>Writer</strong> and
+            one with role <strong>Photojournalist</strong> or{" "}
             <strong>Videojournalist</strong> before you can assign tasks.
           </p>
         ) : (
@@ -1248,7 +1250,7 @@ const resetForm = () => {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <label style={{ marginBottom: 4, fontSize: 14 }}>
-                  Task Title <span style={{ color: "#F97316" }}>*</span>
+                  Task Title <span style={{ color: "#f97373" }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -1257,10 +1259,10 @@ const resetForm = () => {
                   placeholder="e.g. Intramurals Opening Coverage"
                   style={{
                     padding: "8px 10px",
-                    borderRadius: 8,
-                    border: "1px solid #4B5563",
-                    backgroundColor: "#020617",
-                    color: "white",
+                    borderRadius: 10,
+                    border: `1px solid ${THEME.cardBorder}`,
+                    backgroundColor: "#fff7f7",
+                    color: THEME.textMain,
                   }}
                 />
               </div>
@@ -1276,10 +1278,10 @@ const resetForm = () => {
                   placeholder="Short description of the coverage task..."
                   style={{
                     padding: "8px 10px",
-                    borderRadius: 8,
-                    border: "1px solid #4B5563",
-                    backgroundColor: "#020617",
-                    color: "white",
+                    borderRadius: 10,
+                    border: `1px solid ${THEME.cardBorder}`,
+                    backgroundColor: "#fff7f7",
+                    color: THEME.textMain,
                     resize: "vertical",
                   }}
                 />
@@ -1297,10 +1299,10 @@ const resetForm = () => {
                     onChange={(e) => setStatus(e.target.value)}
                     style={{
                       padding: "8px 10px",
-                      borderRadius: 8,
-                      border: "1px solid #4B5563",
-                      backgroundColor: "#020617",
-                      color: "white",
+                      borderRadius: 10,
+                      border: `1px solid ${THEME.cardBorder}`,
+                      backgroundColor: "#fff7f7",
+                      color: THEME.textMain,
                     }}
                   >
                     <option value="Planned">Planned</option>
@@ -1317,34 +1319,32 @@ const resetForm = () => {
                   padding: "10px 18px",
                   borderRadius: 999,
                   border: "none",
-                  background:
-                    "linear-gradient(90deg, #F97316, #EC4899, #6366F1)",
-                  color: "white",
+                  background: THEME.accentGradient,
+                  color: "#ffffff",
                   fontWeight: 600,
                   cursor: "pointer",
                   width: "fit-content",
                 }}
               >
-              {isEditing ? "Save Changes" : "Add Task"}
+                {isEditing ? "Save Changes" : "Add Task"}
               </button>
-
             </div>
 
             {/* Right side: assignment */}
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <label style={{ marginBottom: 4, fontSize: 14 }}>
-                  Writer <span style={{ color: "#F97316" }}>*</span>
+                  Writer <span style={{ color: "#f97373" }}>*</span>
                 </label>
                 <select
                   value={writerId}
                   onChange={(e) => setWriterId(e.target.value)}
                   style={{
                     padding: "8px 10px",
-                    borderRadius: 8,
-                    border: "1px solid #4B5563",
-                    backgroundColor: "#020617",
-                    color: "white",
+                    borderRadius: 10,
+                    border: `1px solid ${THEME.cardBorder}`,
+                    backgroundColor: "#fff7f7",
+                    color: THEME.textMain,
                   }}
                 >
                   <option value="">Select writer…</option>
@@ -1359,17 +1359,17 @@ const resetForm = () => {
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <label style={{ marginBottom: 4, fontSize: 14 }}>
                   Photo/Video Journalist{" "}
-                  <span style={{ color: "#F97316" }}>*</span>
+                  <span style={{ color: "#f97373" }}>*</span>
                 </label>
                 <select
                   value={mediaId}
                   onChange={(e) => setMediaId(e.target.value)}
                   style={{
                     padding: "8px 10px",
-                    borderRadius: 8,
-                    border: "1px solid #4B5563",
-                    backgroundColor: "#020617",
-                    color: "white",
+                    borderRadius: 10,
+                    border: `1px solid ${THEME.cardBorder}`,
+                    backgroundColor: "#fff7f7",
+                    color: THEME.textMain,
                   }}
                 >
                   <option value="">Select photo/video…</option>
@@ -1381,7 +1381,7 @@ const resetForm = () => {
                 </select>
               </div>
 
-              <span style={{ fontSize: 11, color: "#6B7280", marginTop: 4 }}>
+              <span style={{ fontSize: 11, color: THEME.textMuted, marginTop: 4 }}>
                 Writers can only be members with role &quot;Writer&quot;.
                 Photo/Video journalist must be &quot;Photojournalist&quot; or
                 &quot;Videojournalist&quot;.
@@ -1391,7 +1391,7 @@ const resetForm = () => {
         )}
 
         {error && (
-          <p style={{ color: "#F97316", marginTop: 8, fontSize: 14 }}>
+          <p style={{ color: "#e11d48", marginTop: 8, fontSize: 14 }}>
             {error}
           </p>
         )}
@@ -1400,81 +1400,81 @@ const resetForm = () => {
       {/* Task list */}
       <section
         style={{
-          backgroundColor: "#020617",
-          borderRadius: 12,
+          backgroundColor: THEME.cardBg,
+          borderRadius: 16,
           padding: 20,
-          border: "1px solid #374151",
+          border: `1px solid ${THEME.cardBorder}`,
+          boxShadow: "0 10px 24px rgba(248, 113, 113, 0.05)",
         }}
       >
-         <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: 12,
-      alignItems: "center",
-      gap: 12,
-    }}
-  >
-    <h2 style={{ fontSize: 20 }}>Current Tasks</h2>
-
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-end",
-        gap: 6,
-      }}
-    >
-      <span style={{ fontSize: 14, color: "#9CA3AF" }}>
-        Showing: {filteredTasks.length} / {tasks.length}
-      </span>
-
-      <div style={{ display: "flex", gap: 8 }}>
-        {/* Status filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+        <div
           style={{
-            padding: "6px 10px",
-            borderRadius: 999,
-            border: "1px solid #4B5563",
-            backgroundColor: "#020617",
-            color: "white",
-            fontSize: 12,
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 12,
+            alignItems: "center",
+            gap: 12,
           }}
         >
-          <option value="All">All status</option>
-          <option value="Planned">Planned</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Completed">Completed</option>
-        </select>
+          <h2 style={{ fontSize: 20 }}>Current Tasks</h2>
 
-        {/* Search */}
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search title, writer, status…"
-          style={{
-            padding: "6px 10px",
-            borderRadius: 999,
-            border: "1px solid #4B5563",
-            backgroundColor: "#020617",
-            color: "white",
-            fontSize: 12,
-            minWidth: 220,
-          }}
-        />
-      </div>
-    </div>
-  </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: 6,
+            }}
+          >
+            <span style={{ fontSize: 14, color: THEME.textMuted }}>
+              Showing: {filteredTasks.length} / {tasks.length}
+            </span>
 
+            <div style={{ display: "flex", gap: 8 }}>
+              {/* Status filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 999,
+                  border: `1px solid ${THEME.cardBorder}`,
+                  backgroundColor: "#fff7f7",
+                  color: THEME.textMain,
+                  fontSize: 12,
+                }}
+              >
+                <option value="All">All status</option>
+                <option value="Planned">Planned</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+
+              {/* Search */}
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search title, writer, status…"
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 999,
+                  border: `1px solid ${THEME.cardBorder}`,
+                  backgroundColor: "#fff7f7",
+                  color: THEME.textMain,
+                  fontSize: 12,
+                  minWidth: 220,
+                }}
+              />
+            </div>
+          </div>
+        </div>
 
         {filteredTasks.length === 0 ? (
-  <p style={{ color: "#9CA3AF", fontSize: 14 }}>
-    No tasks match your filters/search. Try changing the status filter or
-    clearing the search box.
-  </p>
+          <p style={{ color: THEME.textMuted, fontSize: 14 }}>
+            No tasks match your filters/search. Try changing the status filter
+            or clearing the search box.
+          </p>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table
@@ -1485,52 +1485,23 @@ const resetForm = () => {
               }}
             >
               <thead>
-                <tr style={{ backgroundColor: "#030712" }}>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px",
-                      borderBottom: "1px solid #374151",
-                    }}
-                  >
-                    Title
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px",
-                      borderBottom: "1px solid #374151",
-                    }}
-                  >
-                    Writer
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px",
-                      borderBottom: "1px solid #374151",
-                    }}
-                  >
-                    Photo/Video
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px",
-                      borderBottom: "1px solid #374151",
-                    }}
-                  >
-                    Status
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      padding: "8px",
-                      borderBottom: "1px solid #374151",
-                    }}
-                  >
-                    Actions
-                  </th>
+                <tr style={{ backgroundColor: THEME.tableHeaderBg }}>
+                  {["Title", "Writer", "Photo/Video", "Status", "Actions"].map(
+                    (h, i) => (
+                      <th
+                        key={h}
+                        style={{
+                          textAlign: i === 4 ? "right" : "left",
+                          padding: "8px",
+                          borderBottom: `1px solid ${THEME.cardBorder}`,
+                          color: THEME.textMuted,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {h}
+                      </th>
+                    )
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -1539,7 +1510,7 @@ const resetForm = () => {
                     <td
                       style={{
                         padding: "8px",
-                        borderBottom: "1px solid #111827",
+                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
                       }}
                     >
                       <div style={{ fontWeight: 500 }}>{task.title}</div>
@@ -1547,7 +1518,7 @@ const resetForm = () => {
                         <div
                           style={{
                             fontSize: 12,
-                            color: "#9CA3AF",
+                            color: THEME.textMuted,
                             marginTop: 2,
                           }}
                         >
@@ -1558,7 +1529,7 @@ const resetForm = () => {
                     <td
                       style={{
                         padding: "8px",
-                        borderBottom: "1px solid #111827",
+                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
                       }}
                     >
                       <div style={{ fontSize: 13 }}>
@@ -1567,7 +1538,7 @@ const resetForm = () => {
                       <div
                         style={{
                           fontSize: 11,
-                          color: "#6B7280",
+                          color: THEME.textMuted,
                           marginTop: 2,
                         }}
                       >
@@ -1577,7 +1548,7 @@ const resetForm = () => {
                     <td
                       style={{
                         padding: "8px",
-                        borderBottom: "1px solid #111827",
+                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
                       }}
                     >
                       <div style={{ fontSize: 13 }}>
@@ -1586,7 +1557,7 @@ const resetForm = () => {
                       <div
                         style={{
                           fontSize: 11,
-                          color: "#6B7280",
+                          color: THEME.textMuted,
                           marginTop: 2,
                         }}
                       >
@@ -1596,50 +1567,48 @@ const resetForm = () => {
                     <td
                       style={{
                         padding: "8px",
-                        borderBottom: "1px solid #111827",
+                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
                       }}
                     >
                       {task.status}
                     </td>
                     <td
+                      style={{
+                        padding: "8px",
+                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
+                        textAlign: "right",
+                      }}
+                    >
+                      <button
+                        onClick={() => handleEdit(task)}
                         style={{
-                          padding: "8px",
-                          borderBottom: "1px solid #111827",
-                          textAlign: "right",
+                          padding: "6px 10px",
+                          borderRadius: 999,
+                          border: `1px solid ${THEME.cardBorder}`,
+                          backgroundColor: "#ffffff",
+                          color: THEME.textMain,
+                          fontSize: 12,
+                          cursor: "pointer",
+                          marginRight: 6,
                         }}
                       >
-                        <button
-                          onClick={() => handleEdit(task)}
-                          style={{
-                            padding: "6px 10px",
-                            borderRadius: 999,
-                            border: "1px solid #4B5563",
-                            backgroundColor: "transparent",
-                            color: "#E5E7EB",
-                            fontSize: 12,
-                            cursor: "pointer",
-                            marginRight: 6,
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(task.id)}
-                          style={{
-                            padding: "6px 10px",
-                            borderRadius: 999,
-                            border: "1px solid #DC2626",
-                            backgroundColor: "#7F1D1D",
-                            color: "white",
-                            fontSize: 12,
-                            cursor: "pointer",
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </td>
-
-                    
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(task.id)}
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: 999,
+                          border: `1px solid ${THEME.deleteBorder}`,
+                          backgroundColor: THEME.deleteBg,
+                          color: THEME.deleteText,
+                          fontSize: 12,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1650,8 +1619,6 @@ const resetForm = () => {
     </>
   );
 }
-
-/* ---------- DASHBOARD PAGE ---------- */
 
 /* ---------- DASHBOARD PAGE ---------- */
 
@@ -1666,25 +1633,24 @@ function DashboardPage({ members }) {
   const total = members.length || 1;
 
   const activeMembers =
-    activeRole === null
-      ? []
-      : members.filter((m) => m.role === activeRole);
+    activeRole === null ? [] : members.filter((m) => m.role === activeRole);
 
   return (
     <>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 32, marginBottom: 6 }}>Dashboard</h1>
-        <p style={{ color: "#9CA3AF", maxWidth: 620, fontSize: 14 }}>
+        <p style={{ color: THEME.textMuted, maxWidth: 620, fontSize: 14 }}>
           Quick overview of how many Silahis members you have in each role.
         </p>
       </div>
 
       <section
         style={{
-          backgroundColor: "#020617",
-          borderRadius: 12,
+          backgroundColor: THEME.cardBg,
+          borderRadius: 16,
           padding: 20,
-          border: "1px solid #374151",
+          border: `1px solid ${THEME.cardBorder}`,
+          boxShadow: "0 10px 24px rgba(248, 113, 113, 0.05)",
         }}
       >
         {/* Role cards */}
@@ -1708,19 +1674,23 @@ function DashboardPage({ members }) {
                 }
                 style={{
                   padding: 16,
-                  borderRadius: 12,
+                  borderRadius: 14,
                   border: isActive
-                    ? "1px solid #F97316"
-                    : "1px solid #374151",
-                  backgroundColor: isActive ? "#020314" : "#020617",
+                    ? `1px solid ${THEME.softAccentBorder}`
+                    : `1px solid ${THEME.cardBorder}`,
+                  backgroundColor: isActive ? THEME.softAccentBg : "#ffffff",
                   cursor: "pointer",
-                  transition: "border 0.15s ease, background-color 0.15s ease",
+                  transition:
+                    "border 0.15s ease, background-color 0.15s ease, transform 0.05s, box-shadow 0.15s",
+                  boxShadow: isActive
+                    ? "0 10px 22px rgba(248, 113, 113, 0.18)"
+                    : "0 0 0 rgba(0,0,0,0)",
                 }}
               >
                 <div
                   style={{
                     fontSize: 13,
-                    color: "#9CA3AF",
+                    color: THEME.textMuted,
                     marginBottom: 4,
                   }}
                 >
@@ -1734,7 +1704,7 @@ function DashboardPage({ members }) {
                 <div
                   style={{
                     fontSize: 11,
-                    color: "#6B7280",
+                    color: THEME.textMuted,
                     marginBottom: 8,
                   }}
                 >
@@ -1744,7 +1714,7 @@ function DashboardPage({ members }) {
                   style={{
                     height: 6,
                     borderRadius: 999,
-                    backgroundColor: "#111827",
+                    backgroundColor: "#fee2e2",
                     overflow: "hidden",
                   }}
                 >
@@ -1752,8 +1722,7 @@ function DashboardPage({ members }) {
                     style={{
                       width: `${percent}%`,
                       height: "100%",
-                      background:
-                        "linear-gradient(90deg, #F97316, #EC4899, #6366F1)",
+                      background: THEME.accentGradient,
                     }}
                   />
                 </div>
@@ -1761,12 +1730,10 @@ function DashboardPage({ members }) {
                   style={{
                     marginTop: 8,
                     fontSize: 11,
-                    color: "#6B7280",
+                    color: THEME.textMuted,
                   }}
                 >
-                  {isActive
-                    ? "Click to hide members"
-                    : "Click to view members"}
+                  {isActive ? "Click to hide members" : "Click to view members"}
                 </div>
               </div>
             );
@@ -1792,9 +1759,9 @@ function DashboardPage({ members }) {
                 style={{
                   padding: "4px 10px",
                   borderRadius: 999,
-                  border: "1px solid #4B5563",
-                  backgroundColor: "transparent",
-                  color: "#E5E7EB",
+                  border: `1px solid ${THEME.cardBorder}`,
+                  backgroundColor: "#ffffff",
+                  color: THEME.textMain,
                   fontSize: 11,
                   cursor: "pointer",
                 }}
@@ -1804,7 +1771,7 @@ function DashboardPage({ members }) {
             </div>
 
             {activeMembers.length === 0 ? (
-              <p style={{ fontSize: 13, color: "#9CA3AF" }}>
+              <p style={{ fontSize: 13, color: THEME.textMuted }}>
                 No members with this role yet.
               </p>
             ) : (
@@ -1823,12 +1790,13 @@ function DashboardPage({ members }) {
                     key={m.idNumber}
                     style={{
                       padding: "6px 8px",
-                      borderRadius: 8,
-                      border: "1px solid #111827",
+                      borderRadius: 10,
+                      border: `1px solid ${THEME.tableRowBorder}`,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       fontSize: 13,
+                      backgroundColor: "#fffdfd",
                     }}
                   >
                     <div
@@ -1844,14 +1812,14 @@ function DashboardPage({ members }) {
                           height: 28,
                           borderRadius: "50%",
                           overflow: "hidden",
-                          border: "1px solid #4B5563",
-                          backgroundColor: "#020617",
+                          border: `1px solid ${THEME.cardBorder}`,
+                          backgroundColor: "#fff7f7",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           fontSize: 11,
                           fontWeight: 600,
-                          color: "#9CA3AF",
+                          color: THEME.textSoft,
                         }}
                       >
                         {m.profileImage ? (
@@ -1873,7 +1841,7 @@ function DashboardPage({ members }) {
                         <div
                           style={{
                             fontSize: 11,
-                            color: "#6B7280",
+                            color: THEME.textMuted,
                           }}
                         >
                           ID: {m.idNumber}
@@ -1891,235 +1859,230 @@ function DashboardPage({ members }) {
   );
 }
 
-
 /* ---------- PROFILE PAGE ---------- */
 
 function ProfilePage({ members, loadingMembers, membersError, tasks = [] }) {
+  const { idNumber } = useParams();
+  const navigate = useNavigate();
 
-const { idNumber } = useParams();
-const navigate = useNavigate();
+  const member = members.find((m) => m.idNumber === idNumber);
 
-const member = members.find((m) => m.idNumber === idNumber);
-
-// show loading while members are being fetched
-if (loadingMembers) {
-  return (
-    <div>
-      <button
-        onClick={() => navigate("/members")}
-        style={{
-          padding: "6px 12px",
-          borderRadius: 999,
-          border: "1px solid #4B5563",
-          backgroundColor: "transparent",
-          color: "#E5E7EB",
-          fontSize: 12,
-          cursor: "pointer",
-          marginBottom: 16,
-        }}
-      >
-        ← Back to Members
-      </button>
-      <p style={{ color: "#9CA3AF", fontSize: 14 }}>
-        Loading member details…
-      </p>
-    </div>
-  );
-}
-
-// handle error loading members
-if (membersError) {
-  return (
-    <div>
-      <button
-        onClick={() => navigate("/members")}
-        style={{
-          padding: "6px 12px",
-          borderRadius: 999,
-          border: "1px solid #4B5563",
-          backgroundColor: "transparent",
-          color: "#E5E7EB",
-          fontSize: 12,
-          cursor: "pointer",
-          marginBottom: 16,
-        }}
-      >
-        ← Back to Members
-      </button>
-      <p style={{ color: "#F97316", fontSize: 14 }}>{membersError}</p>
-    </div>
-  );
-}
-
-// if no member with that id
-if (!member) {
-  return (
-    <div>
-      <h1 style={{ fontSize: 24, marginBottom: 8 }}>Member not found</h1>
-      <p style={{ color: "#9CA3AF", marginBottom: 16 }}>
-        The member with ID <code>{idNumber}</code> does not exist.
-      </p>
-      <button
-        onClick={() => navigate("/members")}
-        style={{
-          padding: "8px 16px",
-          borderRadius: 999,
-          border: "1px solid #4B5563",
-          backgroundColor: "transparent",
-          color: "#E5E7EB",
-          cursor: "pointer",
-        }}
-      >
-        Back to Members
-      </button>
-    </div>
-  );
-}
-
-const memberTasks = tasks.filter(
-  (t) => t.writerId === member.idNumber || t.mediaId === member.idNumber
-);
-
-
-  return (
-  <>
-    <button
-      onClick={() => navigate("/members")}
-      style={{
-        padding: "6px 12px",
-        borderRadius: 999,
-        border: "1px solid #4B5563",
-        backgroundColor: "transparent",
-        color: "#E5E7EB",
-        fontSize: 12,
-        cursor: "pointer",
-        marginBottom: 16,
-      }}
-    >
-      ← Back to Members
-    </button>
-
-    <section
-      style={{
-        backgroundColor: "#020617",
-        borderRadius: 12,
-        padding: 24,
-        border: "1px solid #374151",
-        display: "flex",
-        gap: 24,
-        alignItems: "center",
-      }}
-    >
-      <div
-        style={{
-          width: 140,
-          height: 140,
-          borderRadius: "50%",
-          overflow: "hidden",
-          border: "3px solid #4B5563",
-          backgroundColor: "#020617",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 40,
-          fontWeight: 700,
-          color: "#9CA3AF",
-        }}
-      >
-        {member.profileImage ? (
-          <img
-            src={member.profileImage}
-            alt={member.name}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : (
-          <span>{getInitials(member.name)}</span>
-        )}
-      </div>
-
+  if (loadingMembers) {
+    return (
       <div>
-        <h1 style={{ fontSize: 28, marginBottom: 4 }}>{member.name}</h1>
-        <div
+        <button
+          onClick={() => navigate("/members")}
           style={{
-            fontSize: 14,
-            color: "#9CA3AF",
-            marginBottom: 8,
-          }}
-        >
-          ID Number: {member.idNumber}
-        </div>
-        <div
-          style={{
-            display: "inline-block",
-            padding: "4px 10px",
+            padding: "6px 12px",
             borderRadius: 999,
-            border: "1px solid #4B5563",
+            border: `1px solid ${THEME.cardBorder}`,
+            backgroundColor: "#ffffff",
+            color: THEME.textMain,
             fontSize: 12,
-            color: "#E5E7EB",
-            marginBottom: 12,
+            cursor: "pointer",
+            marginBottom: 16,
           }}
         >
-          {member.role}
-        </div>
-
-        <p style={{ fontSize: 14, color: "#9CA3AF", maxWidth: 500 }}>
-          This is the profile view for the selected Silahis member. Later you
-          can extend this page with more details such as contact info, sample
-          works, or assignment history.
+          ← Back to Members
+        </button>
+        <p style={{ color: THEME.textMuted, fontSize: 14 }}>
+          Loading member details…
         </p>
+      </div>
+    );
+  }
 
-        {/* Current assignments block */}
-        <div style={{ marginTop: 20 }}>
-          <h2
-            style={{
-              fontSize: 16,
-              marginBottom: 6,
-              color: "#E5E7EB",
-            }}
-          >
-            Current Assignments
-          </h2>
+  if (membersError) {
+    return (
+      <div>
+        <button
+          onClick={() => navigate("/members")}
+          style={{
+            padding: "6px 12px",
+            borderRadius: 999,
+            border: `1px solid ${THEME.cardBorder}`,
+            backgroundColor: "#ffffff",
+            color: THEME.textMain,
+            fontSize: 12,
+            cursor: "pointer",
+            marginBottom: 16,
+          }}
+        >
+          ← Back to Members
+        </button>
+        <p style={{ color: "#e11d48", fontSize: 14 }}>{membersError}</p>
+      </div>
+    );
+  }
 
-          {memberTasks.length === 0 ? (
-            <p style={{ fontSize: 13, color: "#6B7280" }}>
-              This member has no assigned tasks yet.
-            </p>
+  if (!member) {
+    return (
+      <div>
+        <h1 style={{ fontSize: 24, marginBottom: 8 }}>Member not found</h1>
+        <p style={{ color: THEME.textMuted, marginBottom: 16 }}>
+          The member with ID <code>{idNumber}</code> does not exist.
+        </p>
+        <button
+          onClick={() => navigate("/members")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: 999,
+            border: `1px solid ${THEME.cardBorder}`,
+            backgroundColor: "#ffffff",
+            color: THEME.textMain,
+            cursor: "pointer",
+          }}
+        >
+          Back to Members
+        </button>
+      </div>
+    );
+  }
+
+  const memberTasks = tasks.filter(
+    (t) => t.writerId === member.idNumber || t.mediaId === member.idNumber
+  );
+
+  return (
+    <>
+      <button
+        onClick={() => navigate("/members")}
+        style={{
+          padding: "6px 12px",
+          borderRadius: 999,
+          border: `1px solid ${THEME.cardBorder}`,
+          backgroundColor: "#ffffff",
+          color: THEME.textMain,
+          fontSize: 12,
+          cursor: "pointer",
+          marginBottom: 16,
+        }}
+      >
+        ← Back to Members
+      </button>
+
+      <section
+        style={{
+          backgroundColor: THEME.cardBg,
+          borderRadius: 16,
+          padding: 24,
+          border: `1px solid ${THEME.cardBorder}`,
+          display: "flex",
+          gap: 24,
+          alignItems: "center",
+          boxShadow: "0 14px 32px rgba(248, 113, 113, 0.08)",
+        }}
+      >
+        <div
+          style={{
+            width: 140,
+            height: 140,
+            borderRadius: "50%",
+            overflow: "hidden",
+            border: `3px solid ${THEME.cardBorder}`,
+            backgroundColor: "#fff7f7",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 40,
+            fontWeight: 700,
+            color: THEME.textSoft,
+          }}
+        >
+          {member.profileImage ? (
+            <img
+              src={member.profileImage}
+              alt={member.name}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
           ) : (
-            <ul
-              style={{
-                listStyle: "none",
-                padding: 0,
-                margin: 0,
-                fontSize: 13,
-                color: "#E5E7EB",
-              }}
-            >
-              {memberTasks.map((task) => {
-                const roleLabel =
-                  task.writerId === member.idNumber ? "Writer" : "Media";
-                return (
-                  <li
-                    key={task.id}
-                    style={{
-                      padding: "6px 0",
-                      borderBottom: "1px solid #111827",
-                    }}
-                  >
-                    <div style={{ fontWeight: 500 }}>{task.title}</div>
-                    <div style={{ fontSize: 12, color: "#9CA3AF" }}>
-                      {roleLabel} · {task.status}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            <span>{getInitials(member.name)}</span>
           )}
         </div>
-      </div>
-    </section>
-  </>
-);
 
+        <div>
+          <h1 style={{ fontSize: 28, marginBottom: 4 }}>{member.name}</h1>
+          <div
+            style={{
+              fontSize: 14,
+              color: THEME.textMuted,
+              marginBottom: 8,
+            }}
+          >
+            ID Number: {member.idNumber}
+          </div>
+          <div
+            style={{
+              display: "inline-block",
+              padding: "4px 10px",
+              borderRadius: 999,
+              border: `1px solid ${THEME.softAccentBorder}`,
+              fontSize: 12,
+              color: THEME.textMain,
+              marginBottom: 12,
+              backgroundColor: THEME.softAccentBg,
+            }}
+          >
+            {member.role}
+          </div>
+
+          <p style={{ fontSize: 14, color: THEME.textMuted, maxWidth: 500 }}>
+            This is the profile view for the selected Silahis member. Later you
+            can extend this page with more details such as contact info, sample
+            works, or assignment history.
+          </p>
+
+          {/* Current assignments block */}
+          <div style={{ marginTop: 20 }}>
+            <h2
+              style={{
+                fontSize: 16,
+                marginBottom: 6,
+                color: THEME.textMain,
+              }}
+            >
+              Current Assignments
+            </h2>
+
+            {memberTasks.length === 0 ? (
+              <p style={{ fontSize: 13, color: THEME.textMuted }}>
+                This member has no assigned tasks yet.
+              </p>
+            ) : (
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  fontSize: 13,
+                  color: THEME.textMain,
+                }}
+              >
+                {memberTasks.map((task) => {
+                  const roleLabel =
+                    task.writerId === member.idNumber ? "Writer" : "Media";
+                  return (
+                    <li
+                      key={task.id}
+                      style={{
+                        padding: "6px 0",
+                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
+                      }}
+                    >
+                      <div style={{ fontWeight: 500 }}>{task.title}</div>
+                      <div style={{ fontSize: 12, color: THEME.textMuted }}>
+                        {roleLabel} · {task.status}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+      </section>
+    </>
+  );
 }
 
 /* ---------- ABOUT PAGE ---------- */
@@ -2129,7 +2092,7 @@ function AboutPage() {
     <>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 32, marginBottom: 6 }}>About Silahis</h1>
-        <p style={{ color: "#9CA3AF", maxWidth: 620, fontSize: 14 }}>
+        <p style={{ color: THEME.textMuted, maxWidth: 620, fontSize: 14 }}>
           This page is a placeholder for information about Silahis, the student
           journalist publication. You can customize this content based on your
           organization&apos;s history, mission, and achievements.
@@ -2138,12 +2101,13 @@ function AboutPage() {
 
       <section
         style={{
-          backgroundColor: "#020617",
-          borderRadius: 12,
+          backgroundColor: THEME.cardBg,
+          borderRadius: 16,
           padding: 20,
-          border: "1px solid #374151",
+          border: `1px solid ${THEME.cardBorder}`,
           fontSize: 14,
-          color: "#E5E7EB",
+          color: THEME.textMain,
+          boxShadow: "0 10px 24px rgba(248, 113, 113, 0.05)",
         }}
       >
         <p style={{ marginBottom: 12 }}>
