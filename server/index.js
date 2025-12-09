@@ -42,17 +42,16 @@ db.serialize(() => {
   );
 
   // Tasks table (we'll wire this up later on the frontend)
-  db.run(
-    `
-    CREATE TABLE IF NOT EXISTS tasks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      description TEXT,
-      writerId TEXT NOT NULL,
-      mediaId TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'Planned',
-      createdAt TEXT DEFAULT CURRENT_TIMESTAMP
-    )
+  db.run(`
+  CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    description TEXT,
+    writerId TEXT,
+    mediaId TEXT,
+    status TEXT,
+    date TEXT
+  )
   `,
     (err) => {
       if (err) console.error("Error creating tasks table:", err.message);
@@ -212,105 +211,94 @@ app.listen(PORT, () => {
 
 // Get all tasks
 app.get("/api/tasks", (req, res) => {
-  const sql = `
-    SELECT id, title, description, writerId, mediaId, status, createdAt
-    FROM tasks
-    ORDER BY createdAt DESC
-  `;
-  db.all(sql, [], (err, rows) => {
+  db.all("SELECT * FROM tasks ORDER BY id DESC", [], (err, rows) => {
     if (err) {
-      console.error("Error fetching tasks:", err.message);
+      console.error("Failed to fetch tasks:", err.message);
       return res.status(500).json({ error: "Failed to fetch tasks" });
     }
     res.json(rows);
   });
 });
 
-// Create a new task
 app.post("/api/tasks", (req, res) => {
-  const { title, description, writerId, mediaId, status } = req.body;
+  const { title, description, writerId, mediaId, status, date } = req.body;
 
-  if (!title || !writerId || !mediaId) {
-    return res
-      .status(400)
-      .json({ error: "title, writerId, and mediaId are required" });
-  }
+  const stmt = db.prepare(
+    `
+    INSERT INTO tasks (title, description, writerId, mediaId, status, date)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `
+  );
 
-  const sql = `
-    INSERT INTO tasks (title, description, writerId, mediaId, status)
-    VALUES (?, ?, ?, ?, ?)
-  `;
-  const params = [
-    title.trim(),
-    (description || "").trim(),
+  stmt.run(
+    title,
+    description || "",
     writerId,
     mediaId,
     status || "Planned",
-  ];
+    date || null,
+    function (err) {
+      if (err) {
+        console.error("Failed to insert task:", err.message);
+        return res.status(500).json({ error: "Failed to insert task" });
+      }
 
-  db.run(sql, params, function (err) {
-    if (err) {
-      console.error("Error inserting task:", err.message);
-      return res.status(500).json({ error: "Failed to add task" });
+      // send the new task back, including date
+      res.json({
+        id: this.lastID,
+        title,
+        description: description || "",
+        writerId,
+        mediaId,
+        status: status || "Planned",
+        date: date || null,
+      });
     }
-
-    res.status(201).json({
-      id: this.lastID,
-      title: title.trim(),
-      description: (description || "").trim(),
-      writerId,
-      mediaId,
-      status: status || "Planned",
-      createdAt: new Date().toISOString(),
-    });
-  });
+  );
 });
-
-// Update a task
 app.put("/api/tasks/:id", (req, res) => {
   const { id } = req.params;
-  const { title, description, writerId, mediaId, status } = req.body;
+  const { title, description, writerId, mediaId, status, date } = req.body;
 
-  if (!title || !writerId || !mediaId) {
-    return res
-      .status(400)
-      .json({ error: "title, writerId, and mediaId are required" });
-  }
-
-  const sql = `
+  const stmt = db.prepare(
+    `
     UPDATE tasks
-    SET title = ?, description = ?, writerId = ?, mediaId = ?, status = ?
+    SET title = ?, description = ?, writerId = ?, mediaId = ?, status = ?, date = ?
     WHERE id = ?
-  `;
-  const params = [
-    title.trim(),
-    (description || "").trim(),
+  `
+  );
+
+  stmt.run(
+    title,
+    description || "",
     writerId,
     mediaId,
     status || "Planned",
+    date || null,
     id,
-  ];
+    function (err) {
+      if (err) {
+        console.error("Failed to update task:", err.message);
+        return res.status(500).json({ error: "Failed to update task" });
+      }
 
-  db.run(sql, params, function (err) {
-    if (err) {
-      console.error("Error updating task:", err.message);
-      return res.status(500).json({ error: "Failed to update task" });
+      if (this.changes === 0) {
+        return res.status(404).json({ error: "Task not found" });
+      }
+
+      res.json({
+        id: Number(id),
+        title,
+        description: description || "",
+        writerId,
+        mediaId,
+        status: status || "Planned",
+        date: date || null,
+      });
     }
-
-    if (this.changes === 0) {
-      return res.status(404).json({ error: "Task not found" });
-    }
-
-    res.json({
-      id: Number(id),
-      title: title.trim(),
-      description: (description || "").trim(),
-      writerId,
-      mediaId,
-      status: status || "Planned",
-    });
-  });
+  );
 });
+
 
 // Delete a task
 app.delete("/api/tasks/:id", (req, res) => {

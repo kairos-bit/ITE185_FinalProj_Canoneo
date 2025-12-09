@@ -1006,7 +1006,11 @@ function MembersPage({
                       }}
                     >
                       <strong>{task.title}</strong>{" "}
-                      <span style={{ color: THEME.textMuted }}>({roleLabel})</span>
+<span style={{ color: THEME.textMuted }}>
+  ({roleLabel}
+  {task.date ? ` · ${task.date}` : ""})
+</span>
+
                     </div>
                   );
                 })}
@@ -1103,13 +1107,16 @@ function TaskDashboardPage({
   const [writerId, setWriterId] = useState("");
   const [mediaId, setMediaId] = useState("");
   const [status, setStatus] = useState("Planned");
+  const [date, setDate] = useState(""); // 👈 NEW
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
-    const statusStyles = {
+
+  // status badge styles
+  const statusStyles = {
     Planned: {
       bg: "#ffe4e6",
       text: "#be123c",
@@ -1153,17 +1160,18 @@ function TaskDashboardPage({
     );
   };
 
-
   const resetForm = () => {
     setTitle("");
     setDescription("");
     setWriterId("");
     setMediaId("");
     setStatus("Planned");
+    setDate(""); // 👈 reset date
     setIsEditing(false);
     setEditingId(null);
     setError("");
   };
+
   const handleEdit = (task) => {
     setIsEditing(true);
     setEditingId(task.id);
@@ -1172,6 +1180,7 @@ function TaskDashboardPage({
     setWriterId(task.writerId || "");
     setMediaId(task.mediaId || "");
     setStatus(task.status || "Planned");
+    setDate(task.date || ""); // 👈 load date
     setError("");
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1194,47 +1203,38 @@ function TaskDashboardPage({
     }
 
     try {
+      const payload = {
+        title,
+        description,
+        writerId,
+        mediaId,
+        status,
+        date, // 👈 send date
+      };
+
       if (!isEditing) {
-        // CREATE -> POST /api/tasks
+        // CREATE
         const res = await fetch("http://localhost:4000/api/tasks", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title,
-            description,
-            writerId,
-            mediaId,
-            status,
-          }),
+          body: JSON.stringify(payload),
         });
 
-        if (!res.ok) {
-          throw new Error("Failed to add task");
-        }
-
+        if (!res.ok) throw new Error("Failed to add task");
         const created = await res.json();
-        setTasks((prev) => [created, ...prev]); // newest first
+        setTasks((prev) => [created, ...prev]);
       } else {
-        // UPDATE -> PUT /api/tasks/:id
+        // UPDATE
         const res = await fetch(
           `http://localhost:4000/api/tasks/${editingId}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              title,
-              description,
-              writerId,
-              mediaId,
-              status,
-            }),
+            body: JSON.stringify(payload),
           }
         );
 
-        if (!res.ok) {
-          throw new Error("Failed to update task");
-        }
-
+        if (!res.ok) throw new Error("Failed to update task");
         const updated = await res.json();
         setTasks((prev) =>
           prev.map((t) => (t.id === editingId ? { ...t, ...updated } : t))
@@ -1256,14 +1256,9 @@ function TaskDashboardPage({
         method: "DELETE",
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to delete task");
-      }
-
+      if (!res.ok) throw new Error("Failed to delete task");
       setTasks((prev) => prev.filter((t) => t.id !== id));
-      if (isEditing && editingId === id) {
-        resetForm();
-      }
+      if (isEditing && editingId === id) resetForm();
     } catch (err) {
       console.error(err);
       alert("Could not delete task. Please try again.");
@@ -1297,6 +1292,7 @@ function TaskDashboardPage({
 
   return (
     <>
+      {/* HEADER */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 32, marginBottom: 6 }}>Task Dashboard</h1>
         <p style={{ color: THEME.textMuted, maxWidth: 620, fontSize: 14 }}>
@@ -1316,6 +1312,7 @@ function TaskDashboardPage({
         )}
       </div>
 
+      {/* ADD NEW TASK */}
       <section
         style={{
           backgroundColor: THEME.cardBg,
@@ -1344,6 +1341,7 @@ function TaskDashboardPage({
               alignItems: "flex-start",
             }}
           >
+            {/* LEFT COLUMN: title, desc, date, status, button */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <label style={{ marginBottom: 4, fontSize: 14 }}>
@@ -1380,6 +1378,26 @@ function TaskDashboardPage({
                     backgroundColor: "#fff7f7",
                     color: THEME.textMain,
                     resize: "vertical",
+                  }}
+                />
+              </div>
+
+              {/* NEW DATE FIELD */}
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <label style={{ marginBottom: 4, fontSize: 14 }}>
+                  Coverage Date
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: 10,
+                    border: `1px solid ${THEME.cardBorder}`,
+                    backgroundColor: "#fff7f7",
+                    color: THEME.textMain,
+                    fontSize: 14,
                   }}
                 />
               </div>
@@ -1427,7 +1445,7 @@ function TaskDashboardPage({
               </button>
             </div>
 
-            {/* Right side: assignment */}
+            {/* RIGHT COLUMN: assignments */}
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <label style={{ marginBottom: 4, fontSize: 14 }}>
@@ -1478,7 +1496,9 @@ function TaskDashboardPage({
                 </select>
               </div>
 
-              <span style={{ fontSize: 11, color: THEME.textMuted, marginTop: 4 }}>
+              <span
+                style={{ fontSize: 11, color: THEME.textMuted, marginTop: 4 }}
+              >
                 Writers can only be members with role &quot;Writer&quot;.
                 Photo/Video journalist must be &quot;Photojournalist&quot; or
                 &quot;Videojournalist&quot;.
@@ -1494,7 +1514,7 @@ function TaskDashboardPage({
         )}
       </section>
 
-      {/* Task list */}
+      {/* CURRENT TASKS TABLE */}
       <section
         style={{
           backgroundColor: THEME.cardBg,
@@ -1528,7 +1548,6 @@ function TaskDashboardPage({
             </span>
 
             <div style={{ display: "flex", gap: 8 }}>
-              {/* Status filter */}
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -1547,7 +1566,6 @@ function TaskDashboardPage({
                 <option value="Completed">Completed</option>
               </select>
 
-              {/* Search */}
               <input
                 type="text"
                 value={searchQuery}
@@ -1583,12 +1601,12 @@ function TaskDashboardPage({
             >
               <thead>
                 <tr style={{ backgroundColor: THEME.tableHeaderBg }}>
-                  {["Title", "Writer", "Photo/Video", "Status", "Actions"].map(
+                  {["Title", "Date", "Writer", "Photo/Video", "Status", "Actions"].map(
                     (h, i) => (
                       <th
                         key={h}
                         style={{
-                          textAlign: i === 4 ? "right" : "left",
+                          textAlign: i === 5 ? "right" : "left",
                           padding: "8px",
                           borderBottom: `1px solid ${THEME.cardBorder}`,
                           color: THEME.textMuted,
@@ -1604,6 +1622,7 @@ function TaskDashboardPage({
               <tbody>
                 {filteredTasks.map((task) => (
                   <tr key={task.id}>
+                    {/* TITLE */}
                     <td
                       style={{
                         padding: "8px",
@@ -1623,6 +1642,20 @@ function TaskDashboardPage({
                         </div>
                       )}
                     </td>
+
+                    {/* DATE */}
+                    <td
+                      style={{
+                        padding: "8px",
+                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
+                        fontSize: 13,
+                        color: THEME.textMuted,
+                      }}
+                    >
+                      {task.date || "—"}
+                    </td>
+
+                    {/* WRITER */}
                     <td
                       style={{
                         padding: "8px",
@@ -1642,6 +1675,8 @@ function TaskDashboardPage({
                         {getMemberRole(task.writerId)}
                       </div>
                     </td>
+
+                    {/* PHOTO/VIDEO */}
                     <td
                       style={{
                         padding: "8px",
@@ -1661,15 +1696,18 @@ function TaskDashboardPage({
                         {getMemberRole(task.mediaId)}
                       </div>
                     </td>
-                    <td
-  style={{
-    padding: "8px",
-    borderBottom: `1px solid ${THEME.tableRowBorder}`,
-  }}
->
-  {renderStatusBadge(task.status)}
-</td>
 
+                    {/* STATUS */}
+                    <td
+                      style={{
+                        padding: "8px",
+                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
+                      }}
+                    >
+                      {renderStatusBadge(task.status)}
+                    </td>
+
+                    {/* ACTIONS */}
                     <td
                       style={{
                         padding: "8px",
@@ -1965,6 +2003,51 @@ function ProfilePage({ members, loadingMembers, membersError, tasks = [] }) {
 
   const member = members.find((m) => m.idNumber === idNumber);
 
+    // Reuse the same status pill design as the Task Dashboard
+  const statusStyles = {
+    Planned: {
+      bg: "#ffe4e6",
+      text: "#be123c",
+      border: "#fecdd3",
+    },
+    "In Progress": {
+      bg: "#fef9c3",
+      text: "#854d0e",
+      border: "#fde68a",
+    },
+    Completed: {
+      bg: "#dcfce7",
+      text: "#166534",
+      border: "#bbf7d0",
+    },
+  };
+
+  const renderStatusBadge = (status) => {
+    const s = statusStyles[status] || {
+      bg: "#e5e7eb",
+      text: "#374151",
+      border: "#d1d5db",
+    };
+
+    return (
+      <span
+        style={{
+          padding: "3px 9px",
+          borderRadius: 999,
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: 0.3,
+          backgroundColor: s.bg,
+          color: s.text,
+          border: `1px solid ${s.border}`,
+          textTransform: "uppercase",
+        }}
+      >
+        {status}
+      </span>
+    );
+  };
+
   if (loadingMembers) {
     return (
       <div>
@@ -2161,17 +2244,28 @@ function ProfilePage({ members, loadingMembers, membersError, tasks = [] }) {
                     task.writerId === member.idNumber ? "Writer" : "Media";
                   return (
                     <li
-                      key={task.id}
-                      style={{
-                        padding: "6px 0",
-                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
-                      }}
-                    >
-                      <div style={{ fontWeight: 500 }}>{task.title}</div>
-                      <div style={{ fontSize: 12, color: THEME.textMuted }}>
-                        {roleLabel} · {task.status}
-                      </div>
-                    </li>
+  key={task.id}
+  style={{
+    padding: "6px 0",
+    borderBottom: `1px solid ${THEME.tableRowBorder}`,
+  }}
+>
+  <div style={{ fontWeight: 500, marginBottom: 2 }}>{task.title}</div>
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      fontSize: 12,
+      color: THEME.textMuted,
+    }}
+  >
+    <span>{roleLabel}</span>
+    {renderStatusBadge(task.status)}
+  </div>
+</li>
+
                   );
                 })}
               </ul>
