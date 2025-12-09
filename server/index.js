@@ -6,6 +6,11 @@ const path = require("path");
 
 const app = express();
 const PORT = 4000;
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const bcrypt = require("bcryptjs"); // 👈 add this
+
 
 // Middleware
 app.use(cors());
