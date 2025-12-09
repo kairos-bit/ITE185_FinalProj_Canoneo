@@ -931,41 +931,94 @@ function MembersPage({
                           }}
                         >
                           {memberTasks.length === 0 ? (
-                            <span
-                              style={{ fontSize: 12, color: THEME.textMuted }}
-                            >
-                              —
-                            </span>
-                          ) : (
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 2,
-                                fontSize: 12,
-                                color: THEME.textMuted,
-                              }}
-                            >
-                              {memberTasks.map((task) => {
-                                const roleLabel =
-                                  task.writerId === member.idNumber
-                                    ? "Writer"
-                                    : "Media";
-                                return (
-                                  <span key={task.id}>
-                                    <strong>{task.title}</strong>{" "}
-                                    <span
-                                      style={{
-                                        color: THEME.textMuted,
-                                      }}
-                                    >
-                                      ({roleLabel} · {task.status})
-                                    </span>
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          )}
+  <span style={{ fontSize: 12, color: THEME.textMuted }}>—</span>
+) : (
+  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+
+    {(() => {
+      // Group tasks
+      const grouped = {
+        Planned: [],
+        "In Progress": [],
+        Completed: [],
+      };
+
+      memberTasks.forEach((task) => {
+        const status = task.status || "Planned";
+        if (!grouped[status]) grouped[status] = [];
+        grouped[status].push(task);
+      });
+
+      // Colors for each status
+      const statusStyles = {
+        Planned: {
+          bg: "#ffe4e6",
+          text: "#be123c",
+          border: "#fecdd3",
+        },
+        "In Progress": {
+          bg: "#fef9c3",
+          text: "#854d0e",
+          border: "#fde68a",
+        },
+        Completed: {
+          bg: "#dcfce7",
+          text: "#166534",
+          border: "#bbf7d0",
+        },
+      };
+
+      return Object.entries(grouped).map(
+        ([status, tasksInGroup]) =>
+          tasksInGroup.length > 0 && (
+            <div key={status} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              
+              {/* Status Header */}
+              <div
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 8,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: 0.6,
+                  width: "fit-content",
+                  backgroundColor: statusStyles[status].bg,
+                  color: statusStyles[status].text,
+                  border: `1px solid ${statusStyles[status].border}`,
+                  textTransform: "uppercase",
+                }}
+              >
+                {status}
+              </div>
+
+              {/* Tasks under that status */}
+              <div style={{ marginLeft: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+                {tasksInGroup.map((task) => {
+                  const roleLabel =
+                    task.writerId === member.idNumber ? "Writer" : "Media";
+                  return (
+                    <div
+                      key={task.id}
+                      style={{
+                        fontSize: 13,
+                        color: THEME.textMain,
+                        padding: "2px 4px",
+                      }}
+                    >
+                      <strong>{task.title}</strong>{" "}
+                      <span style={{ color: THEME.textMuted }}>({roleLabel})</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )
+      );
+    })()}
+
+  </div>
+)}
+
                         </td>
 
                         {/* Actions */}
@@ -1056,6 +1109,50 @@ function TaskDashboardPage({
 
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+    const statusStyles = {
+    Planned: {
+      bg: "#ffe4e6",
+      text: "#be123c",
+      border: "#fecdd3",
+    },
+    "In Progress": {
+      bg: "#fef9c3",
+      text: "#854d0e",
+      border: "#fde68a",
+    },
+    Completed: {
+      bg: "#dcfce7",
+      text: "#166534",
+      border: "#bbf7d0",
+    },
+  };
+
+  const renderStatusBadge = (status) => {
+    const s = statusStyles[status] || {
+      bg: "#e5e7eb",
+      text: "#374151",
+      border: "#d1d5db",
+    };
+
+    return (
+      <span
+        style={{
+          padding: "4px 10px",
+          borderRadius: 999,
+          fontSize: 12,
+          fontWeight: 600,
+          letterSpacing: 0.3,
+          backgroundColor: s.bg,
+          color: s.text,
+          border: `1px solid ${s.border}`,
+          textTransform: "uppercase",
+        }}
+      >
+        {status}
+      </span>
+    );
+  };
+
 
   const resetForm = () => {
     setTitle("");
@@ -1565,13 +1662,14 @@ function TaskDashboardPage({
                       </div>
                     </td>
                     <td
-                      style={{
-                        padding: "8px",
-                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
-                      }}
-                    >
-                      {task.status}
-                    </td>
+  style={{
+    padding: "8px",
+    borderBottom: `1px solid ${THEME.tableRowBorder}`,
+  }}
+>
+  {renderStatusBadge(task.status)}
+</td>
+
                     <td
                       style={{
                         padding: "8px",
