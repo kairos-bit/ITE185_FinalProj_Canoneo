@@ -127,48 +127,122 @@ app.post("/api/members", (req, res) => {
 
 // PUT update member by idNumber
 app.put("/api/members/:idNumber", (req, res) => {
-  const { idNumber } = req.params;
+  const oldIdNumber = req.params.idNumber;
   const { newIdNumber, name, role, profileImage } = req.body;
 
-  if (!newIdNumber || !name || !role) {
-    return res
-      .status(400)
-      .json({ error: "newIdNumber, name, and role are required" });
-  }
+  const stmt = db.prepare(
+    `
+    UPDATE members
+    SET idNumber = ?, name = ?, role = ?, profileImage = ?
+    WHERE idNumber = ?
+  `
+  );
 
-  const sql =
-    "UPDATE members SET idNumber = ?, name = ?, role = ?, profileImage = ? WHERE idNumber = ?";
-  const params = [
-    newIdNumber.trim(),
-    name.trim(),
+  stmt.run(
+    newIdNumber,
+    name,
     role,
     profileImage || null,
-    idNumber,
-  ];
-
-  db.run(sql, params, function (err) {
-    if (err) {
-      console.error("Error updating member:", err.message);
-      if (err.message.includes("UNIQUE")) {
-        return res
-          .status(409)
-          .json({ error: "Another member already uses that ID number" });
+    oldIdNumber,
+    function (err) {
+      if (err) {
+        console.error("Failed to update member:", err.message);
+        return res.status(500).json({ error: "Failed to update member" });
       }
-      return res.status(500).json({ error: "Failed to update member" });
-    }
 
-    if (this.changes === 0) {
-      return res.status(404).json({ error: "Member not found" });
-    }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: "Member not found" });
+      }
 
-    res.json({
-      idNumber: newIdNumber.trim(),
-      name: name.trim(),
-      role,
-      profileImage: profileImage || null,
-    });
-  });
+      // Cascade ID change to tasks (if ID number itself changed)
+      db.serialize(() => {
+        db.run(
+          `
+          UPDATE tasks
+          SET writerId = ?
+          WHERE writerId = ?
+        `,
+          [newIdNumber, oldIdNumber],
+          (err2) => {
+            if (err2) {
+              console.error(
+                "Failed to cascade writerId update in tasks:",
+                err2.message
+              );
+            }
+          }
+        );
+
+        db.run(
+          `
+          UPDATE tasks
+          SET mediaId = ?
+          WHERE mediaId = ?
+        `,
+          [newIdNumber, oldIdNumber],
+          (err3) => {
+            if (err3) {
+              console.error(
+                "Failed to cascade mediaId update in tasks:",
+                err3.message
+              );
+            }
+          }
+        );
+
+        // 🔹 Role-based cleanup:
+
+        // If this member is now a Writer, they should not be in mediaId
+        if (role === "Writer") {
+          db.run(
+            `
+            UPDATE tasks
+            SET mediaId = NULL
+            WHERE mediaId = ?
+          `,
+            [newIdNumber],
+            (err4) => {
+              if (err4) {
+                console.error(
+                  "Failed to clear mediaId for new Writer:",
+                  err4.message
+                );
+              }
+            }
+          );
+        }
+
+        // If this member is now Photo/Video, they should not be in writerId
+        if (role === "Photojournalist" || role === "Videojournalist") {
+          db.run(
+            `
+            UPDATE tasks
+            SET writerId = NULL
+            WHERE writerId = ?
+          `,
+            [newIdNumber],
+            (err5) => {
+              if (err5) {
+                console.error(
+                  "Failed to clear writerId for new Photo/Video:",
+                  err5.message
+                );
+              }
+            }
+          );
+        }
+      });
+
+      res.json({
+        idNumber: newIdNumber,
+        name,
+        role,
+        profileImage: profileImage || null,
+      });
+    }
+  );
 });
+
 
 // DELETE member by idNumber
 app.delete("/api/members/:idNumber", (req, res) => {
