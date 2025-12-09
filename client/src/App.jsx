@@ -1037,8 +1037,8 @@ function MembersPage({
                 }}
               >
                 {tasksInGroup.map((task) => {
-                  const roleLabel =
-                    task.writerId === member.idNumber ? "Writer" : "Media";
+                 const roleLabel = member.role === "Writer" ? "Writer" : "Media";
+
                   return (
                     <div
                       key={task.id}
@@ -1213,6 +1213,8 @@ function TaskDashboardPage({
     );
   };
 
+
+
   const resetForm = () => {
     setTitle("");
     setDescription("");
@@ -1323,6 +1325,35 @@ function TaskDashboardPage({
 
   const getMemberRole = (id) =>
     members.find((m) => m.idNumber === id)?.role || "—";
+
+    const getTaskAssignmentForDisplay = (task) => {
+    const writerMember =
+      members.find((m) => m.idNumber === task.writerId) || null;
+    const mediaMember =
+      members.find((m) => m.idNumber === task.mediaId) || null;
+
+    let writer = writerMember;
+    let media = mediaMember;
+
+    // If "writer" is now a media role (Photo/Video) and there is no dedicated media,
+    // show them in the Photo/Video column instead.
+    if (writer && writer.role !== "Writer" && MEDIA_ROLES.includes(writer.role)) {
+      if (!media) {
+        media = writer;
+      }
+      writer = null;
+    }
+
+    // If "media" is now a Writer and there is no dedicated writer,
+    // show them in the Writer column instead.
+    if (media && media.role === "Writer" && !writer) {
+      writer = media;
+      media = null;
+    }
+
+    return { writer, media };
+  };
+
 
   const filteredTasks = tasks.filter((task) => {
     if (statusFilter !== "All" && task.status !== statusFilter) return false;
@@ -1672,29 +1703,34 @@ function TaskDashboardPage({
                   )}
                 </tr>
               </thead>
-              <tbody>
-                {filteredTasks.map((task) => (
-                  <tr key={task.id}>
-                    {/* TITLE */}
-                    <td
-                      style={{
-                        padding: "8px",
-                        borderBottom: `1px solid ${THEME.tableRowBorder}`,
-                      }}
-                    >
-                      <div style={{ fontWeight: 500 }}>{task.title}</div>
-                      {task.description && (
-                        <div
-                          style={{
-                            fontSize: 12,
-                            color: THEME.textMuted,
-                            marginTop: 2,
-                          }}
-                        >
-                          {task.description}
-                        </div>
-                      )}
-                    </td>
+             <tbody>
+  {filteredTasks.map((task) => {
+
+    const { writer, media } = getTaskAssignmentForDisplay(task);
+
+    return (
+      <tr key={task.id}>
+        {/* TITLE */}
+        <td
+          style={{
+            padding: "8px",
+            borderBottom: `1px solid ${THEME.tableRowBorder}`,
+          }}
+        >
+          <div style={{ fontWeight: 500 }}>{task.title}</div>
+          {task.description && (
+            <div
+              style={{
+                fontSize: 12,
+                color: THEME.textMuted,
+                marginTop: 2,
+              }}
+            >
+              {task.description}
+            </div>
+          )}
+        </td>
+
 
                     {/* DATE */}
                     <td
@@ -1799,7 +1835,8 @@ function TaskDashboardPage({
                       </button>
                     </td>
                   </tr>
-                ))}
+               );
+  })}
               </tbody>
             </table>
           </div>
@@ -2293,8 +2330,8 @@ function ProfilePage({ members, loadingMembers, membersError, tasks = [] }) {
                 }}
               >
                 {memberTasks.map((task) => {
-                  const roleLabel =
-                    task.writerId === member.idNumber ? "Writer" : "Media";
+                  const roleLabel = member.role === "Writer" ? "Writer" : "Media";
+
                   return (
                     <li
   key={task.id}
